@@ -12,6 +12,7 @@ export const formularioLogin = (req, res) => {
 export const formularioRegistro = (req, res) => {
   res.render("auth/registro", {
     pagina: "Crear Cuenta",
+    csrfToken: req.csrfToken(),
   });
 };
 
@@ -38,6 +39,7 @@ export const registrarUsuario = async (req, res) => {
   if (!resultado.isEmpty()) {
     return res.render("auth/registro", {
       pagina: "Crear Cuenta",
+      csrfToken: req.csrfToken(),
       errores: resultado.array(),
       usuario: {
         nombre: req.body.nombre,
@@ -53,6 +55,7 @@ export const registrarUsuario = async (req, res) => {
   if (existeUsuario) {
     return res.render("auth/registro", {
       pagina: "Crear Cuenta",
+      csrfToken: req.csrfToken(),
       errores: [{ msg: "El usuario ya esta registrado con ese email" }],
       usuario: {
         nombre: req.body.nombre,
@@ -83,6 +86,31 @@ export const registrarUsuario = async (req, res) => {
   res.render("templates/mensaje", {
     pagina: "Cuenta creada correctamente",
     mensaje: "Hemos enviado un email de confirmacion presiona en el enlace",
+  });
+};
+
+export const confirmarEmail = async (req, res) => {
+  //extrar el valor de token que se mando por la url
+  const { token } = req.params;
+
+  //verficar si el token es valido
+  const usuario = await Usuario.findOne({ where: { token } });
+
+  if (!usuario) {
+    return res.render("auth/confirmar-cuenta", {
+      pagina: "Error al confirmar tu cuenta",
+      mensaje: "Hubo un error al confirmar tu cuentam, Intenta nuevamente",
+      error: true,
+    });
+  }
+  //Confirmar la cuenta
+  usuario.token = null;
+  usuario.confirmado = true;
+  usuario.save();
+
+  res.render("auth/confirmar-cuenta", {
+    pagina: "Cuenta confirmada",
+    mensaje: "La cuenta se confirmo correctamente",
   });
 };
 
